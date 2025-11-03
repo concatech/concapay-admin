@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Silenciar aviso de lockfiles múltiplos
+  outputFileTracingRoot: process.cwd(),
 };
 
 export default nextConfig;
