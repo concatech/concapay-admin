@@ -13,9 +13,9 @@ export function AppHeader() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+    <header className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Painel Administrativo</h1>
+        <h1 className="text-xl font-semibold text-[#20304c]">Painel Administrativo</h1>
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"

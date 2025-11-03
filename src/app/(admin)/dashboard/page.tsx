@@ -147,8 +147,8 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl mb-2">Visão Geral</h1>
-        <p className="text-muted-foreground">Atualizado em {formatDateTime(data.generated_at)}</p>
+        <h1 className="text-2xl font-bold text-[#20304c] mb-2">Visão Geral</h1>
+        <p className="text-lg text-[#20304c]">Atualizado em {formatDateTime(data.generated_at)}</p>
       </div>
 
       <FilterSection>
@@ -171,20 +171,20 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.title} className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm text-muted-foreground">{stat.title}</CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                <CardTitle className="text-base text-[#4a5565]">{stat.title}</CardTitle>
+                <div className="bg-[#dbeafe] p-2.5 rounded-lg">
+                  <Icon className="h-5 w-5 text-black" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl mb-1">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <div className="text-xl text-[#101828] font-normal mb-1">{stat.value}</div>
+                <p className="text-xs text-[#4a5565]">{stat.description}</p>
               </CardContent>
             </Card>
           );

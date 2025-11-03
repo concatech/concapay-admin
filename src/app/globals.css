@@ -56,6 +56,7 @@
   body {
     background-color: hsl(0 0% 100%);
     color: hsl(222.2 84% 4.9%);
+    font-family: 'Exo', ui-sans-serif, system-ui, sans-serif;
   }
   a {
     text-decoration: none;
