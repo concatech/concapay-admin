@@ -68,8 +68,8 @@ export default function UsersPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl mb-2">Usuários</h1>
-        <p className="text-muted-foreground">Gerencie todos os usuários da plataforma</p>
+        <h1 className="text-2xl font-bold text-[#20304c] mb-2">Usuários</h1>
+        <p className="text-lg text-[#20304c]">Gerencie todos os usuários da plataforma</p>
       </div>
 
       <FilterSection>
@@ -105,44 +105,46 @@ export default function UsersPage() {
               {users.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</div>
               ) : (
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Cadastrado em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        {user.is_admin ? (
-                          <Badge variant="destructive">Admin</Badge>
-                        ) : (
-                          <Badge variant="secondary">Usuário</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{formatDate(user.inserted_at)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/users/${user.id}`)}
-                          className="text-primary hover:text-primary hover:bg-primary/10"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Ver detalhes
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-blue-100">
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Nome</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Email</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Tipo</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Cadastrado em</TableHead>
+                        <TableHead className="text-right text-base font-bold text-gray-900 px-6 py-3">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedUsers.map((user, index) => (
+                        <TableRow key={user.id} className={index % 2 === 1 ? "bg-[#f5f9fe]" : "bg-white"}>
+                          <TableCell className="px-6 py-4">{user.name}</TableCell>
+                          <TableCell className="px-6 py-4">{user.email}</TableCell>
+                          <TableCell className="px-6 py-4">
+                            {user.is_admin ? (
+                              <Badge variant="destructive">Admin</Badge>
+                            ) : (
+                              <Badge variant="secondary">Usuário</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="px-6 py-4">{formatDate(user.inserted_at)}</TableCell>
+                          <TableCell className="text-right px-6 py-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/users/${user.id}`)}
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Ver detalhes
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
               <TablePagination
                 currentPage={currentPage}

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,13 +53,18 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">C</span>
-              </div>
+            <div className="flex items-center justify-center ">
+              <Image
+                src="/logo-concapay-sem-fundo.png"
+                alt="Concapay"
+                width={200}
+                className="w-full h-auto"
+                height={200}
+                priority
+              />
             </div>
-            <CardTitle className="text-2xl text-center">Concapay Admin</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl text-center font-bold text-[#20304c]">Concapay Admin</CardTitle>
+            <CardDescription className="text-center text-[#20304c]">
               Entre com suas credenciais para acessar o painel
             </CardDescription>
           </CardHeader>

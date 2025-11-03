@@ -34,13 +34,25 @@ const handleAuthError = (response: Response) => {
   }
 };
 
+const buildSearchParams = (filters?: Record<string, string | undefined>): URLSearchParams => {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, value);
+      }
+    });
+  }
+  return params;
+};
+
 export const api = {
   // Dashboard
   getDashboard: async (filters?: {
     start_date?: string;
     end_date?: string;
   }): Promise<DashboardData> => {
-    const params = new URLSearchParams(filters as any);
+    const params = buildSearchParams(filters);
     const response = await fetch(`${API_BASE_URL}/admin/dashboard?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -58,7 +70,9 @@ export const api = {
     email?: string;
     is_admin?: boolean;
   }): Promise<User[]> => {
-    const params = new URLSearchParams(filters as any);
+    const params = buildSearchParams(
+      filters ? { ...filters, is_admin: filters.is_admin?.toString() } : undefined
+    );
     const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -115,7 +129,7 @@ export const api = {
     status?: string;
     user_id?: string;
   }): Promise<{ total: number; contests: Contest[] }> => {
-    const params = new URLSearchParams(filters as any);
+    const params = buildSearchParams(filters);
     const response = await fetch(`${API_BASE_URL}/admin/contests?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -124,7 +138,12 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch contests');
     }
-    return response.json();
+    const apiResponse = await response.json();
+    // A API retorna { data: [...], pagination: {...} }
+    return {
+      contests: apiResponse.data || [],
+      total: apiResponse.pagination?.total_count || apiResponse.data?.length || 0,
+    };
   },
 
   getContest: async (contestId: string): Promise<Contest> => {
@@ -173,8 +192,8 @@ export const api = {
     inserted_at_start?: string;
     inserted_at_end?: string;
     buyer_email?: string;
-  }): Promise<Order[]> => {
-    const params = new URLSearchParams(filters as any);
+  }): Promise<{ orders: Order[]; total: number }> => {
+    const params = buildSearchParams(filters);
     const response = await fetch(`${API_BASE_URL}/admin/orders?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -183,8 +202,12 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch orders');
     }
-    const data = await response.json();
-    return data.data;
+    const apiResponse = await response.json();
+    // A API retorna { data: [...], pagination: {...} }
+    return {
+      orders: apiResponse.data || [],
+      total: apiResponse.pagination?.total_count || apiResponse.data?.length || 0,
+    };
   },
 
   // Webhooks
@@ -194,7 +217,7 @@ export const api = {
     event_type?: string;
     mercado_pago_order_id?: string;
   }): Promise<{ count: number; data: WebhookEvent[] }> => {
-    const params = new URLSearchParams(filters as any);
+    const params = buildSearchParams(filters);
     const response = await fetch(`${API_BASE_URL}/webhooks/events?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',

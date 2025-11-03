@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Search, Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { TablePagination } from '@/components/shared/TablePagination';
@@ -47,12 +47,13 @@ export default function ContestsPage() {
 
   useEffect(() => {
     loadContests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStatuses, currentPage, pageSize]);
 
   const loadContests = async () => {
     setLoading(true);
     try {
-      const filters: any = {};
+      const filters: { status?: string; user_id?: string } = {};
       if (selectedStatuses.length > 0) {
         filters.status = selectedStatuses[0];
       }
@@ -116,8 +117,8 @@ export default function ContestsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl mb-2">Contestações</h1>
-        <p className="text-muted-foreground">Gerencie solicitações de cancelamento de compras</p>
+        <h1 className="text-2xl font-bold text-[#20304c] mb-2">Contestações</h1>
+        <p className="text-lg text-[#20304c]">Gerencie solicitações de cancelamento de compras</p>
       </div>
 
       <FilterSection>

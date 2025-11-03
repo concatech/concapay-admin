@@ -61,8 +61,8 @@ export default function OrdersPage() {
         filters.inserted_at_end = format(endDate, 'yyyy-MM-dd');
       }
       const data = await api.getOrders(filters);
-      setOrders(data);
-      setTotalItems(data.length);
+      setOrders(data.orders);
+      setTotalItems(data.total);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
@@ -108,8 +108,8 @@ export default function OrdersPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl mb-2">Vendas</h1>
-        <p className="text-muted-foreground">Visualize e gerencie todas as vendas da plataforma</p>
+        <h1 className="text-2xl font-bold text-[#20304c] mb-2">Vendas</h1>
+        <p className="text-lg text-[#20304c]">Visualize e gerencie todas as vendas da plataforma</p>
       </div>
 
       <FilterSection>
