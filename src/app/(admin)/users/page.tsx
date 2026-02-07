@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { User } from '@/types';
-import { api } from '@/services/api';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -21,36 +19,30 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
+import { useUsers, UserFilters } from '@/hooks/useUsers';
 
 export default function UsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchEmail, setSearchEmail] = useState(''); // Email aplicado na busca
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [totalItems, setTotalItems] = useState(0);
 
-  useEffect(() => {
-    loadUsers();
-  }, [currentPage, pageSize]);
+  // Monta os filtros para o hook
+  const filters: UserFilters = useMemo(() => ({
+    email: searchEmail || undefined,
+    page: currentPage,
+    limit: pageSize,
+  }), [searchEmail, currentPage, pageSize]);
 
-  const loadUsers = async (email?: string) => {
-    setLoading(true);
-    try {
-      const data = await api.getUsers(email ? { email } : undefined);
-      setUsers(data);
-      setTotalItems(data.length);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Usa o hook React Query
+  const { data, isLoading: loading } = useUsers(filters);
+  const users = data?.data ?? [];
+  const pagination = data?.pagination;
 
   const handleSearch = () => {
+    setSearchEmail(searchInput);
     setCurrentPage(1);
-    loadUsers(searchEmail);
   };
 
   const handlePageChange = (page: number) => {
@@ -61,9 +53,6 @@ export default function UsersPage() {
     setPageSize(size);
     setCurrentPage(1);
   };
-
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const paginatedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="p-6 space-y-6">
@@ -76,8 +65,8 @@ export default function UsersPage() {
         <FilterGroup label="Email">
           <Input
             placeholder="Buscar por email..."
-            value={searchEmail}
-            onChange={(e) => setSearchEmail(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
         </FilterGroup>
@@ -91,7 +80,7 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Usuários ({totalItems})</CardTitle>
+          <CardTitle>Lista de Usuários ({pagination?.total_count ?? 0})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -117,7 +106,7 @@ export default function UsersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedUsers.map((user, index) => (
+                      {users.map((user, index) => (
                         <TableRow key={user.id} className={index % 2 === 1 ? "bg-[#f5f9fe]" : "bg-white"}>
                           <TableCell className="px-6 py-4">{user.name}</TableCell>
                           <TableCell className="px-6 py-4">{user.email}</TableCell>
@@ -147,9 +136,12 @@ export default function UsersPage() {
                 </div>
               )}
               <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
+                currentPage={pagination?.page ?? currentPage}
+                totalPages={pagination?.total_pages ?? 1}
+                pageSize={pagination?.limit ?? pageSize}
+                totalCount={pagination?.total_count}
+                hasNext={pagination?.has_next}
+                hasPrev={pagination?.has_prev}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />

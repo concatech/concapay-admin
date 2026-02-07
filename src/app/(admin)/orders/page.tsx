@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { Order } from '@/types';
-import { api } from '@/services/api';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -24,55 +22,50 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useOrders, OrderFilters } from '@/hooks/useOrders';
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [searchEmail, setSearchEmail] = useState(''); // Email aplicado na busca
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [totalItems, setTotalItems] = useState(0);
 
-  useEffect(() => {
-    loadOrders();
-  }, [selectedStatuses, selectedPaymentMethods, startDate, endDate, currentPage, pageSize]);
-
-  const loadOrders = async () => {
-    setLoading(true);
-    try {
-      const filters: any = {};
-      if (selectedStatuses.length > 0) {
-        filters.status = selectedStatuses[0];
-      }
-      if (selectedPaymentMethods.length > 0) {
-        filters.payment_method = selectedPaymentMethods[0];
-      }
-      if (buyerEmail) {
-        filters.buyer_email = buyerEmail;
-      }
-      if (startDate) {
-        filters.inserted_at_start = format(startDate, 'yyyy-MM-dd');
-      }
-      if (endDate) {
-        filters.inserted_at_end = format(endDate, 'yyyy-MM-dd');
-      }
-      const data = await api.getOrders(filters);
-      setOrders(data.orders);
-      setTotalItems(data.total);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      setLoading(false);
+  // Monta os filtros para o hook
+  const filters: OrderFilters = useMemo(() => {
+    const f: OrderFilters = {
+      page: currentPage,
+      limit: pageSize,
+    };
+    if (selectedStatuses.length > 0) {
+      f.status = selectedStatuses[0];
     }
-  };
+    if (selectedPaymentMethods.length > 0) {
+      f.payment_method = selectedPaymentMethods[0];
+    }
+    if (searchEmail) {
+      f.buyer_email = searchEmail;
+    }
+    if (startDate) {
+      f.inserted_at_start = format(startDate, 'yyyy-MM-dd');
+    }
+    if (endDate) {
+      f.inserted_at_end = format(endDate, 'yyyy-MM-dd');
+    }
+    return f;
+  }, [selectedStatuses, selectedPaymentMethods, searchEmail, startDate, endDate, currentPage, pageSize]);
+
+  // Usa o hook React Query
+  const { data, isLoading: loading } = useOrders(filters);
+  const orders = data?.data ?? [];
+  const pagination = data?.pagination;
 
   const handleSearch = () => {
+    setSearchEmail(buyerEmail);
     setCurrentPage(1);
-    loadOrders();
   };
 
   const handlePageChange = (page: number) => {
@@ -83,9 +76,6 @@ export default function OrdersPage() {
     setPageSize(size);
     setCurrentPage(1);
   };
-
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const paginatedOrders = orders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleDateChange = (start: Date | undefined, end: Date | undefined) => {
     setStartDate(start);
@@ -148,7 +138,7 @@ export default function OrdersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Vendas ({totalItems})</CardTitle>
+          <CardTitle>Lista de Vendas ({pagination?.total_count ?? 0})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -177,7 +167,7 @@ export default function OrdersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {paginatedOrders.map((order) => (
+                    {orders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="whitespace-nowrap">{formatDate(order.inserted_at)}</TableCell>
                         <TableCell>{order.buyer_email}</TableCell>
@@ -217,9 +207,12 @@ export default function OrdersPage() {
                 </div>
               )}
               <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
+                currentPage={pagination?.page ?? currentPage}
+                totalPages={pagination?.total_pages ?? 1}
+                pageSize={pagination?.limit ?? pageSize}
+                totalCount={pagination?.total_count}
+                hasNext={pagination?.has_next}
+                hasPrev={pagination?.has_prev}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />

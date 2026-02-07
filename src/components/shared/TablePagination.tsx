@@ -14,6 +14,9 @@ interface TablePaginationProps {
   currentPage: number;
   totalPages: number;
   pageSize: number;
+  totalCount?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   pageSizeOptions?: number[];
@@ -23,6 +26,9 @@ export function TablePagination({
   currentPage,
   totalPages,
   pageSize,
+  totalCount,
+  hasNext,
+  hasPrev,
   onPageChange,
   onPageSizeChange,
   pageSizeOptions = [10, 25, 50, 100],
@@ -31,6 +37,10 @@ export function TablePagination({
   const handlePreviousPage = () => onPageChange(Math.max(1, currentPage - 1));
   const handleNextPage = () => onPageChange(Math.min(totalPages, currentPage + 1));
   const handleLastPage = () => onPageChange(totalPages);
+
+  // Use backend pagination flags if provided, otherwise calculate from currentPage/totalPages
+  const canGoPrev = hasPrev !== undefined ? hasPrev : currentPage > 1;
+  const canGoNext = hasNext !== undefined ? hasNext : currentPage < totalPages;
 
   return (
     <div className="flex items-center justify-between px-2 py-4 border-t">
@@ -56,6 +66,7 @@ export function TablePagination({
       <div className="flex items-center gap-6">
         <span className="text-sm text-muted-foreground">
           Página {currentPage} de {totalPages}
+          {totalCount !== undefined && ` (${totalCount} itens)`}
         </span>
 
         <div className="flex items-center gap-1">
@@ -64,7 +75,7 @@ export function TablePagination({
             size="icon"
             className="h-8 w-8"
             onClick={handleFirstPage}
-            disabled={currentPage === 1}
+            disabled={!canGoPrev}
             title="Primeira página"
           >
             <ChevronsLeft className="h-4 w-4" />
@@ -74,7 +85,7 @@ export function TablePagination({
             size="icon"
             className="h-8 w-8"
             onClick={handlePreviousPage}
-            disabled={currentPage === 1}
+            disabled={!canGoPrev}
             title="Página anterior"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -84,7 +95,7 @@ export function TablePagination({
             size="icon"
             className="h-8 w-8"
             onClick={handleNextPage}
-            disabled={currentPage === totalPages}
+            disabled={!canGoNext}
             title="Próxima página"
           >
             <ChevronRight className="h-4 w-4" />
@@ -94,7 +105,7 @@ export function TablePagination({
             size="icon"
             className="h-8 w-8"
             onClick={handleLastPage}
-            disabled={currentPage === totalPages}
+            disabled={!canGoNext}
             title="Última página"
           >
             <ChevronsRight className="h-4 w-4" />

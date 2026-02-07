@@ -7,6 +7,7 @@ import type {
   Contest,
   Order,
   WebhookEvent,
+  PaginatedResponse,
 } from '@/types';
 
 const API_BASE_URL = 'https://concapay-back.fly.dev/api/v1';
@@ -69,9 +70,16 @@ export const api = {
   getUsers: async (filters?: {
     email?: string;
     is_admin?: boolean;
-  }): Promise<User[]> => {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<User>> => {
     const params = buildSearchParams(
-      filters ? { ...filters, is_admin: filters.is_admin?.toString() } : undefined
+      filters ? { 
+        ...filters, 
+        is_admin: filters.is_admin?.toString(),
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString()
+      } : undefined
     );
     const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
       headers: getHeaders(),
@@ -81,8 +89,7 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch users');
     }
-    const data = await response.json();
-    return data.data;
+    return response.json();
   },
 
   getUserBalance: async (userId: string): Promise<UserBalance> => {
@@ -128,8 +135,16 @@ export const api = {
   getContests: async (filters?: {
     status?: string;
     user_id?: string;
-  }): Promise<{ total: number; contests: Contest[] }> => {
-    const params = buildSearchParams(filters);
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Contest>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString()
+      } : undefined
+    );
     const response = await fetch(`${API_BASE_URL}/admin/contests?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -138,12 +153,7 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch contests');
     }
-    const apiResponse = await response.json();
-    // A API retorna { data: [...], pagination: {...} }
-    return {
-      contests: apiResponse.data || [],
-      total: apiResponse.pagination?.total_count || apiResponse.data?.length || 0,
-    };
+    return response.json();
   },
 
   getContest: async (contestId: string): Promise<Contest> => {
@@ -192,8 +202,16 @@ export const api = {
     inserted_at_start?: string;
     inserted_at_end?: string;
     buyer_email?: string;
-  }): Promise<{ orders: Order[]; total: number }> => {
-    const params = buildSearchParams(filters);
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Order>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString()
+      } : undefined
+    );
     const response = await fetch(`${API_BASE_URL}/admin/orders?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -202,12 +220,7 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch orders');
     }
-    const apiResponse = await response.json();
-    // A API retorna { data: [...], pagination: {...} }
-    return {
-      orders: apiResponse.data || [],
-      total: apiResponse.pagination?.total_count || apiResponse.data?.length || 0,
-    };
+    return response.json();
   },
 
   // Webhooks
