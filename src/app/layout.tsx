@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Exo } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/lib/query-client";
 
 const exo = Exo({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
       <html lang="pt-BR" className={exo.variable}>
         <body className={`antialiased font-primary ${exo.className}`} suppressHydrationWarning>
-          {children}
+          <QueryProvider>
+            {children}
+          </QueryProvider>
         </body>
       </html>
   );

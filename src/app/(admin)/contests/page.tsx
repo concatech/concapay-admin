@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Contest } from '@/types';
-import { api } from '@/services/api';
 import {
   Table,
   TableBody,
@@ -31,41 +30,37 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useContests, useApproveContest, useRejectContest, ContestFilters } from '@/hooks/useContests';
 
 export default function ContestsPage() {
-  const [contests, setContests] = useState<Contest[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedContest, setSelectedContest] = useState<Contest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'view'>('view');
   const [adminNotes, setAdminNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [totalItems, setTotalItems] = useState(0);
 
-  useEffect(() => {
-    loadContests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Monta os filtros para o hook
+  const filters: ContestFilters = useMemo(() => {
+    const f: ContestFilters = {
+      page: currentPage,
+      limit: pageSize,
+    };
+    if (selectedStatuses.length > 0) {
+      f.status = selectedStatuses[0];
+    }
+    return f;
   }, [selectedStatuses, currentPage, pageSize]);
 
-  const loadContests = async () => {
-    setLoading(true);
-    try {
-      const filters: { status?: string; user_id?: string } = {};
-      if (selectedStatuses.length > 0) {
-        filters.status = selectedStatuses[0];
-      }
-      const data = await api.getContests(filters);
-      setContests(data.contests);
-      setTotalItems(data.total || (data.contests?.length ?? 0));
-    } catch (error) {
-      console.error('Error loading contests:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Usa os hooks React Query
+  const { data, isLoading: loading } = useContests(filters);
+  const contests = data?.data ?? [];
+  const pagination = data?.pagination;
+
+  const approveContestMutation = useApproveContest();
+  const rejectContestMutation = useRejectContest();
+  const submitting = approveContestMutation.isPending || rejectContestMutation.isPending;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -75,9 +70,6 @@ export default function ContestsPage() {
     setPageSize(size);
     setCurrentPage(1);
   };
-
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const paginatedContests = contests?.slice((currentPage - 1) * pageSize, currentPage * pageSize) ?? [];
 
   const statusOptions = [
     { value: 'pending', label: 'Pendente' },
@@ -95,22 +87,24 @@ export default function ContestsPage() {
   const handleSubmitDecision = async () => {
     if (!selectedContest) return;
 
-    setSubmitting(true);
     try {
       if (dialogType === 'approve') {
-        await api.approveContest(selectedContest.id, adminNotes);
+        await approveContestMutation.mutateAsync({ 
+          contestId: selectedContest.id, 
+          adminNotes 
+        });
         toast.success('Contestação aprovada com sucesso');
       } else if (dialogType === 'reject') {
-        await api.rejectContest(selectedContest.id, adminNotes);
+        await rejectContestMutation.mutateAsync({ 
+          contestId: selectedContest.id, 
+          adminNotes 
+        });
         toast.success('Contestação rejeitada com sucesso');
       }
       setDialogOpen(false);
-      loadContests();
     } catch (error) {
       console.error('Error processing contest:', error);
       toast.error('Erro ao processar contestação');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -133,7 +127,7 @@ export default function ContestsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Contestações ({totalItems})</CardTitle>
+          <CardTitle>Lista de Contestações ({pagination?.total_count ?? 0})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -159,7 +153,7 @@ export default function ContestsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedContests.map((contest) => (
+                  {contests.map((contest) => (
                     <TableRow key={contest.id}>
                       <TableCell className="whitespace-nowrap">{formatDate(contest.created_at)}</TableCell>
                       <TableCell>
@@ -214,9 +208,12 @@ export default function ContestsPage() {
               </Table>
               )}
               <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
+                currentPage={pagination?.page ?? currentPage}
+                totalPages={pagination?.total_pages ?? 1}
+                pageSize={pagination?.limit ?? pageSize}
+                totalCount={pagination?.total_count}
+                hasNext={pagination?.has_next}
+                hasPrev={pagination?.has_prev}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />

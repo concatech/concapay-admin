@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -11,38 +11,31 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const authenticated = authService.isAuthenticated();
-        setIsAuthenticated(authenticated);
-        setIsLoading(false);
+  const checkAuth = useCallback(() => {
+    try {
+      const authenticated = authService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      setIsLoading(false);
 
-        if (!authenticated && pathname !== '/login' && pathname !== '/') {
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        if (pathname !== '/login' && pathname !== '/') {
-          router.push('/login');
-        }
+      if (!authenticated) {
+        router.push('/login');
       }
-    };
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      router.push('/login');
+    }
+  }, [router]);
 
-    // Verificar imediatamente
+  // Verificar auth apenas uma vez no mount — não a cada navegação.
+  // O layout admin persiste entre páginas, então não precisa re-checar.
+  useEffect(() => {
     checkAuth();
-
-    // Também verificar após um pequeno delay para casos de race condition
-    const timer = setTimeout(checkAuth, 100);
-
-    return () => clearTimeout(timer);
-  }, [pathname, router]);
+  }, [checkAuth]);
 
   if (isLoading) {
     return (
@@ -57,7 +50,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return null; // Será redirecionado para login
+    return null;
   }
 
   return <>{children}</>;

@@ -1,3 +1,23 @@
+// Pagination Types
+export interface PaginationMeta {
+  limit: number;
+  page: number;
+  has_next: boolean;
+  has_prev: boolean;
+  total_count: number;
+  total_pages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
 // Dashboard Types
 export interface DashboardData {
   active_users: number;
@@ -85,6 +105,7 @@ export interface Contest {
   updated_at: string;
   admin_notes: string | null;
   decided_at: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any | null;
   pending_fund: PendingFund;
   created_at: string;
