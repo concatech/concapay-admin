@@ -8,6 +8,7 @@ import type {
   Order,
   WebhookEvent,
   PaginatedResponse,
+  ReconciliationResponse,
 } from '@/types';
 
 const API_BASE_URL = 'https://concapay-back.fly.dev/api/v1';
@@ -105,8 +106,21 @@ export const api = {
     return data.data;
   },
 
-  getUserPendingFunds: async (userId: string): Promise<PendingFund[]> => {
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/pending-funds`, {
+  getUserPendingFunds: async (userId: string, filters?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    inserted_at_start?: string;
+    inserted_at_end?: string;
+  }): Promise<PaginatedResponse<PendingFund>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString(),
+      } : undefined
+    );
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/pending-funds?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
     });
@@ -114,12 +128,25 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch pending funds');
     }
-    const data = await response.json();
-    return data.data || [];
+    return response.json();
   },
 
-  getUserTransactions: async (userId: string): Promise<Transaction[]> => {
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/transactions`, {
+  getUserTransactions: async (userId: string, filters?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    transaction_id?: string;
+    inserted_at_start?: string;
+    inserted_at_end?: string;
+  }): Promise<PaginatedResponse<Transaction>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString(),
+      } : undefined
+    );
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/transactions?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
     });
@@ -127,8 +154,26 @@ export const api = {
       handleAuthError(response);
       throw new Error('Failed to fetch transactions');
     }
-    const data = await response.json();
-    return data.data;
+    return response.json();
+  },
+
+  resetUserPassword: async (email: string, password: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/reset-password`, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      if (response.status === 422) {
+        throw new Error('Formato de senha inválido. Mínimo 6 caracteres, 1 maiúscula, 1 minúscula e 1 número/símbolo.');
+      }
+      if (response.status === 404) {
+        throw new Error('Usuário não encontrado.');
+      }
+      throw new Error('Falha ao redefinir senha');
+    }
+    return response.json();
   },
 
   // Contests
@@ -223,14 +268,79 @@ export const api = {
     return response.json();
   },
 
+  // Reconciliations
+  getReconciliations: async (filters?: {
+    order_id?: string;
+    reconciled_by_type?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    page_size?: number;
+  }): Promise<ReconciliationResponse> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        page_size: filters.page_size?.toString(),
+      } : undefined
+    );
+    const response = await fetch(`${API_BASE_URL}/admin/reconciliations?${params}`, {
+      headers: getHeaders(),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      throw new Error('Failed to fetch reconciliations');
+    }
+    return response.json();
+  },
+
+  reconcileOrder: async (orderId: string): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      order_id: string;
+      previous_status: string;
+      new_status: string;
+      reconciled_at: string;
+      reconciled_by: { id: string; email: string };
+    };
+  }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/reconcile`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      if (response.status === 404) {
+        throw new Error('Pedido não encontrado.');
+      }
+      if (response.status === 422) {
+        throw new Error('Falha na reconciliação.');
+      }
+      throw new Error('Failed to reconcile order');
+    }
+    return response.json();
+  },
+
   // Webhooks
   getWebhookEvents: async (filters?: {
     action?: string;
     status?: string;
     event_type?: string;
-    mercado_pago_order_id?: string;
-  }): Promise<{ count: number; data: WebhookEvent[] }> => {
-    const params = buildSearchParams(filters);
+    order_id?: string;
+    page?: number;
+    limit?: number;
+    inserted_at_start?: string;
+    inserted_at_end?: string;
+  }): Promise<PaginatedResponse<WebhookEvent>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString(),
+      } : undefined
+    );
     const response = await fetch(`${API_BASE_URL}/webhooks/events?${params}`, {
       headers: getHeaders(),
       cache: 'no-store',
@@ -250,6 +360,30 @@ export const api = {
     if (!response.ok) {
       handleAuthError(response);
       throw new Error('Failed to fetch order webhook events');
+    }
+    return response.json();
+  },
+
+  getMercadoPagoWebhookEvents: async (mpOrderId: string): Promise<{ count: number; data: WebhookEvent[] }> => {
+    const response = await fetch(`${API_BASE_URL}/webhooks/mercado_pago/${mpOrderId}/events`, {
+      headers: getHeaders(),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      throw new Error('Failed to fetch Mercado Pago webhook events');
+    }
+    return response.json();
+  },
+
+  getExternalRefWebhookEvents: async (externalReference: string): Promise<{ count: number; data: WebhookEvent[] }> => {
+    const response = await fetch(`${API_BASE_URL}/webhooks/external/${externalReference}/events`, {
+      headers: getHeaders(),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      throw new Error('Failed to fetch external reference webhook events');
     }
     return response.json();
   },
