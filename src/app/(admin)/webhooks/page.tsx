@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { WebhookEvent } from '@/types';
-import { api } from '@/services/api';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -15,54 +13,53 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FilterSection, FilterGroup } from '@/components/filters/FilterSection';
 import { MultiSelectFilter } from '@/components/filters/MultiSelectFilter';
+import { DateRangeFilter } from '@/components/filters/DateRangeFilter';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { format } from 'date-fns';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useWebhookEvents, WebhookFilters } from '@/hooks/useWebhooks';
 
 export default function WebhooksPage() {
-  const [events, setEvents] = useState<WebhookEvent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
-  const [orderId, setOrderId] = useState('');
+  const [orderIdInput, setOrderIdInput] = useState('');
+  const [searchOrderId, setSearchOrderId] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [totalItems, setTotalItems] = useState(0);
 
-  useEffect(() => {
-    loadEvents();
-  }, [selectedStatuses, selectedEventTypes, currentPage, pageSize]);
+  const filters: WebhookFilters = useMemo(() => {
+    const f: WebhookFilters = {
+      page: currentPage,
+      limit: pageSize,
+    };
+    if (selectedStatuses.length > 0) f.status = selectedStatuses[0];
+    if (selectedEventTypes.length > 0) f.event_type = selectedEventTypes[0];
+    if (searchOrderId) f.order_id = searchOrderId;
+    if (startDate) f.inserted_at_start = format(startDate, 'yyyy-MM-dd');
+    if (endDate) f.inserted_at_end = format(endDate, 'yyyy-MM-dd');
+    return f;
+  }, [selectedStatuses, selectedEventTypes, searchOrderId, startDate, endDate, currentPage, pageSize]);
 
-  const loadEvents = async () => {
-    setLoading(true);
-    try {
-      const filters: any = {};
-      if (selectedStatuses.length > 0) {
-        filters.status = selectedStatuses[0];
-      }
-      if (selectedEventTypes.length > 0) {
-        filters.event_type = selectedEventTypes[0];
-      }
-      if (orderId) {
-        filters.mercado_pago_order_id = orderId;
-      }
-      const data = await api.getWebhookEvents(filters);
-      setEvents(data.data);
-      setTotalItems(data.count || data.data.length);
-    } catch (error) {
-      console.error('Error loading webhook events:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading: loading } = useWebhookEvents(filters);
+  const events = data?.data ?? [];
+  const pagination = data?.pagination;
 
   const handleSearch = () => {
+    setSearchOrderId(orderIdInput);
     setCurrentPage(1);
-    loadEvents();
+  };
+
+  const handleDateChange = (start: Date | undefined, end: Date | undefined) => {
+    setStartDate(start);
+    setEndDate(end);
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -73,9 +70,6 @@ export default function WebhooksPage() {
     setPageSize(size);
     setCurrentPage(1);
   };
-
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const paginatedEvents = events.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const statusOptions = [
     { value: 'processed', label: 'Processado' },
@@ -106,11 +100,11 @@ export default function WebhooksPage() {
       </div>
 
       <FilterSection>
-        <FilterGroup label="Order ID (Mercado Pago)">
+        <FilterGroup label="Order ID">
           <Input
             placeholder="Buscar por Order ID..."
-            value={orderId}
-            onChange={(e) => setOrderId(e.target.value)}
+            value={orderIdInput}
+            onChange={(e) => setOrderIdInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
         </FilterGroup>
@@ -128,6 +122,9 @@ export default function WebhooksPage() {
             onSelectionChange={setSelectedEventTypes}
           />
         </FilterGroup>
+        <FilterGroup label="Período">
+          <DateRangeFilter onDateChange={handleDateChange} />
+        </FilterGroup>
         <div className="flex items-end">
           <Button onClick={handleSearch}>
             <Search className="w-4 h-4 mr-2" />
@@ -138,7 +135,7 @@ export default function WebhooksPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Eventos ({totalItems})</CardTitle>
+          <CardTitle>Lista de Eventos ({pagination?.total_count ?? 0})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -154,64 +151,67 @@ export default function WebhooksPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Recebido em</TableHead>
-                      <TableHead>Processado em</TableHead>
-                      <TableHead>Ação</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>ID Mercado Pago</TableHead>
-                      <TableHead>Oferta</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {formatDate(event.webhook_received_at)}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {event.processed_at ? formatDate(event.processed_at) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {event.action}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{getEventTypeLabel(event.event_type)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={event.status} type="webhook" />
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {formatCurrency(event.total_amount)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-xs">
-                            <div className="text-muted-foreground">Pedido:</div>
-                            <div className="font-mono">{event.mercado_pago_order_id}</div>
-                            <div className="text-muted-foreground mt-1">Pagamento:</div>
-                            <div className="font-mono">{event.mercado_pago_payment_id}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-2 py-1 rounded">
-                            {event.offer_id}
-                          </code>
-                        </TableCell>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Recebido em</TableHead>
+                        <TableHead>Processado em</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>ID Mercado Pago</TableHead>
+                        <TableHead>Oferta</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {formatDate(event.webhook_received_at)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {event.processed_at ? formatDate(event.processed_at) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {event.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{getEventTypeLabel(event.event_type)}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={event.status} type="webhook" />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatCurrency(event.total_amount)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-xs">
+                              <div className="text-muted-foreground">Pedido:</div>
+                              <div className="font-mono">{event.mercado_pago_order_id}</div>
+                              <div className="text-muted-foreground mt-1">Pagamento:</div>
+                              <div className="font-mono">{event.mercado_pago_payment_id}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                              {event.offer_id}
+                            </code>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
               <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
+                currentPage={pagination?.page ?? currentPage}
+                totalPages={pagination?.total_pages ?? 1}
+                pageSize={pagination?.limit ?? pageSize}
+                totalCount={pagination?.total_count}
+                hasNext={pagination?.has_next}
+                hasPrev={pagination?.has_prev}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />
@@ -233,13 +233,9 @@ export default function WebhooksPage() {
               <span className="text-gray-600">Eventos de Pagamento:</span> Relacionados ao processamento de
               pagamentos
             </p>
-            <p>
-              <span className="text-gray-600">Status Detail:</span> {events[0]?.status_detail || 'N/A'}
-            </p>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-

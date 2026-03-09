@@ -16,13 +16,15 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FilterSection, FilterGroup } from '@/components/filters/FilterSection';
 import { MultiSelectFilter } from '@/components/filters/MultiSelectFilter';
 import { DateRangeFilter } from '@/components/filters/DateRangeFilter';
-import { Search, AlertCircle } from 'lucide-react';
+import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { toast } from 'sonner';
 import { useOrders, OrderFilters } from '@/hooks/useOrders';
+import { useReconcileOrder } from '@/hooks/useReconciliations';
 
 export default function OrdersPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -62,6 +64,17 @@ export default function OrdersPage() {
   const { data, isLoading: loading } = useOrders(filters);
   const orders = data?.data ?? [];
   const pagination = data?.pagination;
+  const reconcileMutation = useReconcileOrder();
+
+  const handleReconcile = async (orderId: string) => {
+    try {
+      const result = await reconcileMutation.mutateAsync(orderId);
+      toast.success(result.message || 'Pedido reconciliado com sucesso');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao reconciliar pedido';
+      toast.error(message);
+    }
+  };
 
   const handleSearch = () => {
     setSearchEmail(buyerEmail);
@@ -164,6 +177,7 @@ export default function OrdersPage() {
                         <TableHead>Pagamento</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Contestado</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -199,6 +213,18 @@ export default function OrdersPage() {
                               Sim
                             </Badge>
                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReconcile(order.id)}
+                            disabled={reconcileMutation.isPending}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <RefreshCw className={`w-4 h-4 mr-1 ${reconcileMutation.isPending ? 'animate-spin' : ''}`} />
+                            Reconciliar
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

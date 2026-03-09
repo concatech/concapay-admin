@@ -157,6 +157,34 @@ export interface Order {
   is_contested: boolean;
 }
 
+// Reconciliation Types
+export type ReconciledByType = 'system_worker' | 'admin_manual' | 'api_call';
+
+export interface Reconciliation {
+  id: string;
+  order_id: string;
+  previous_status: string;
+  new_status: string;
+  order_status: string;
+  mp_status: string;
+  reconciled_at: string;
+  reconciled_by_type: ReconciledByType;
+  reconciliation_reason: string;
+}
+
+export interface ReconciliationPagination {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface ReconciliationResponse {
+  success: boolean;
+  data: Reconciliation[];
+  pagination: ReconciliationPagination;
+}
+
 // Webhook Types
 export type WebhookEventType = 'order' | 'payment' | 'unknown';
 export type WebhookStatus = 'processed' | 'action_required' | 'failed';
