@@ -13,6 +13,9 @@ const exo = Exo({
 export const metadata: Metadata = {
   title: "Concapay Admin",
   description: "Painel administrativo Concapay",
+  icons: {
+    icon: "/logo--black.svg",
+  },
 };
 
 export default function RootLayout({

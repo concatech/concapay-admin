@@ -76,6 +76,37 @@ export default function OrdersPage() {
     }
   };
 
+  const handleCopyOrderId = async (orderId: string) => {
+    try {
+      // Tentativa principal com Clipboard API moderna
+      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(orderId);
+        toast.success('ID copiado para a área de transferência');
+        return;
+      }
+
+      // Fallback para ambientes sem HTTPS ou sem Clipboard API
+      const textarea = document.createElement('textarea');
+      textarea.value = orderId;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        toast.success('ID copiado para a área de transferência');
+      } else {
+        throw new Error('Falha ao copiar');
+      }
+    } catch {
+      toast.error('Não foi possível copiar o ID');
+    }
+  };
+
   const handleSearch = () => {
     setSearchEmail(buyerEmail);
     setCurrentPage(1);
@@ -171,6 +202,7 @@ export default function OrdersPage() {
                       <TableRow>
                         <TableHead>Data</TableHead>
                         <TableHead>Comprador</TableHead>
+                        <TableHead>Id da venda</TableHead>
                         <TableHead>Produto</TableHead>
                         <TableHead>Vendedor</TableHead>
                         <TableHead>Valor</TableHead>
@@ -185,6 +217,15 @@ export default function OrdersPage() {
                       <TableRow key={order.id}>
                         <TableCell className="whitespace-nowrap">{formatDate(order.inserted_at)}</TableCell>
                         <TableCell>{order.buyer_email}</TableCell>
+                        <TableCell>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyOrderId(order.id)}
+                            className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline text-left"
+                          >
+                            {order.id}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="max-w-xs truncate">{order.offer.product.name}</div>
