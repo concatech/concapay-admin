@@ -13,7 +13,7 @@ import type {
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://concapay-back.fly.dev/api/v1';
+  'https://concapay-back.fly.dev/api/v1adsfsdf';
 
 const getHeaders = () => {
   // Em produção, pegar tokens do cookie/context
