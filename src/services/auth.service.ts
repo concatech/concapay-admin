@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://concapay-back.fly.dev/api/v1';
+import { API_BASE_URL } from '@/config/api';
 
 export interface LoginCredentials {
   email: string;

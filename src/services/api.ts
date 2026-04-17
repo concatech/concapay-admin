@@ -10,10 +10,7 @@ import type {
   PaginatedResponse,
   ReconciliationResponse,
 } from '@/types';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://concapay-back.fly.dev/api/v1';
+import { API_BASE_URL } from '@/config/api';
 
 const getHeaders = () => {
   // Em produção, pegar tokens do cookie/context
