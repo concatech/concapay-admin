@@ -11,7 +11,9 @@ import type {
   ReconciliationResponse,
 } from '@/types';
 
-const API_BASE_URL = 'https://concapay-back.fly.dev/api/v1';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'https://concapay-back.fly.dev/api/v1';
 
 const getHeaders = () => {
   // Em produção, pegar tokens do cookie/context
