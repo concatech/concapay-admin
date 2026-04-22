@@ -83,6 +83,36 @@ export default function ContestsPage() {
     setAdminNotes('');
     setDialogOpen(true);
   };
+  const handleCopyOrderId = async (orderId: string) => {
+    try {
+      // Tentativa principal com Clipboard API moderna
+      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(orderId);
+        toast.success('ID copiado para a área de transferência');
+        return;
+      }
+
+      // Fallback para ambientes sem HTTPS ou sem Clipboard API
+      const textarea = document.createElement('textarea');
+      textarea.value = orderId;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        toast.success('ID copiado para a área de transferência');
+      } else {
+        throw new Error('Falha ao copiar');
+      }
+    } catch {
+      toast.error('Não foi possível copiar o ID');
+    }
+  };
 
   const handleSubmitDecision = async () => {
     if (!selectedContest) return;
@@ -146,6 +176,7 @@ export default function ContestsPage() {
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Usuário</TableHead>
+                    <TableHead>Id</TableHead>
                     <TableHead>Motivo</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
@@ -162,6 +193,13 @@ export default function ContestsPage() {
                           <div className="text-xs text-muted-foreground">{contest.user.email}</div>
                         </div>
                       </TableCell>
+                      <TableCell><button
+                            type="button"
+                            onClick={() => handleCopyOrderId(contest.user.id)}
+                            className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline text-left"
+                          >
+                            {contest.user.id}
+                          </button></TableCell>
                       <TableCell className="max-w-xs truncate">{contest.reason}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {formatCurrency(contest.pending_fund.amount)}
