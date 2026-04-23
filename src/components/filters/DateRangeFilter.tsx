@@ -22,13 +22,13 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
   };
 
   const presetRanges = [
-    { label: 'Últimos 7 dias',    getValue: () => ({ start: subDays(new Date(), 7),   end: new Date() }) },
-    { label: 'Últimos 30 dias',   getValue: () => ({ start: subDays(new Date(), 30),  end: new Date() }) },
-    { label: 'Últimos 3 meses',   getValue: () => ({ start: subDays(new Date(), 90),  end: new Date() }) },
-    { label: 'Últimos 12 meses',  getValue: () => ({ start: subDays(new Date(), 365), end: new Date() }) },
-    { label: 'Este mês',          getValue: () => ({ start: startOfMonth(new Date()),   end: new Date() }) },
-    { label: 'Este trimestre',    getValue: () => ({ start: startOfQuarter(new Date()), end: new Date() }) },
-    { label: 'Este ano',          getValue: () => ({ start: startOfYear(new Date()),    end: new Date() }) },
+    { label: 'Últimos 7 dias',   getValue: () => ({ start: subDays(new Date(), 7),   end: new Date() }) },
+    { label: 'Últimos 30 dias',  getValue: () => ({ start: subDays(new Date(), 30),  end: new Date() }) },
+    { label: 'Últimos 3 meses',  getValue: () => ({ start: subDays(new Date(), 90),  end: new Date() }) },
+    { label: 'Últimos 12 meses', getValue: () => ({ start: subDays(new Date(), 365), end: new Date() }) },
+    { label: 'Este mês',         getValue: () => ({ start: startOfMonth(new Date()),   end: new Date() }) },
+    { label: 'Este trimestre',   getValue: () => ({ start: startOfQuarter(new Date()), end: new Date() }) },
+    { label: 'Este ano',         getValue: () => ({ start: startOfYear(new Date()),    end: new Date() }) },
   ];
 
   const handlePresetClick = (preset: typeof presetRanges[0]) => {
@@ -41,10 +41,7 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
 
   const handleStartSelect = (date: Date | undefined) => {
     setStartDate(date);
-    // limpa fim se a nova data início for posterior
-    if (date && endDate && date > endDate) {
-      setEndDate(undefined);
-    }
+    if (date && endDate && date > endDate) setEndDate(undefined);
   };
 
   const handleEndSelect = (date: Date | undefined) => {
@@ -61,9 +58,9 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
 
   const formatDateRange = () => {
     if (startDate && endDate)
-      return `${format(startDate, 'dd/MM/yyyy')} - ${format(endDate, 'dd/MM/yyyy')}`;
+      return `${format(startDate, 'dd/MM/yy')} - ${format(endDate, 'dd/MM/yy')}`;
     if (startDate)
-      return `${format(startDate, 'dd/MM/yyyy')} - Fim`;
+      return `${format(startDate, 'dd/MM/yy')} - Fim`;
     return 'Selecionar período';
   };
 
@@ -77,23 +74,28 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto max-w-[95vw] overflow-x-auto p-0"
+          className="w-[min(95vw,700px)] max-h-[85vh] p-0 flex flex-col"
           align="start"
           sideOffset={8}
           side="bottom"
+          collisionPadding={8}
           onFocusOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <div className="flex">
-            <div className="shrink-0 border-r p-3">
-              <p className="text-xs font-medium text-muted-foreground px-2 mb-2">Períodos</p>
-              <div className="flex flex-col gap-1">
+          {/* Área scrollável */}
+          <div className="flex flex-col sm:flex-row overflow-y-auto flex-1 min-h-0">
+            {/* Presets: horizontal wrapping no mobile, coluna no desktop */}
+            <div className="shrink-0 border-b sm:border-b-0 sm:border-r p-3">
+              <p className="hidden sm:block text-xs font-medium text-muted-foreground px-2 mb-2">
+                Períodos
+              </p>
+              <div className="flex flex-row flex-wrap gap-1 sm:flex-col">
                 {presetRanges.map((preset) => (
                   <Button
                     key={preset.label}
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-sm whitespace-nowrap"
+                    className="justify-start text-xs sm:text-sm whitespace-nowrap shrink-0"
                     onClick={() => handlePresetClick(preset)}
                   >
                     {preset.label}
@@ -101,7 +103,9 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
                 ))}
               </div>
             </div>
-            <div className="flex flex-col gap-0 sm:flex-row">
+
+            {/* Calendários: empilhados no mobile, lado a lado no desktop */}
+            <div className="flex flex-col sm:flex-row">
               <div className="shrink-0 p-3">
                 <p className="text-xs font-medium text-muted-foreground text-center mb-1">Início</p>
                 <Calendar
@@ -123,13 +127,16 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2 border-t px-3 py-2">
+
+          {/* Footer fixo no fundo */}
+          <div className="shrink-0 flex justify-end border-t bg-popover px-3 py-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
               Fechar
             </Button>
           </div>
         </PopoverContent>
       </Popover>
+
       {(startDate || endDate) && (
         <Button
           variant="ghost"

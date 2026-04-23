@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,33 +11,20 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const checkAuth = useCallback(() => {
+  const [isAuthenticated] = useState(() => {
     try {
-      const authenticated = authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      setIsLoading(false);
-
-      if (!authenticated) {
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
-      setIsAuthenticated(false);
-      setIsLoading(false);
-      router.push('/login');
+      return authService.isAuthenticated();
+    } catch {
+      return false;
     }
-  }, [router]);
+  });
 
-  // Verificar auth apenas uma vez no mount — não a cada navegação.
-  // O layout admin persiste entre páginas, então não precisa re-checar.
+  // Navegação (side effect) depois do mount, sem setState em efeito.
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!isAuthenticated) router.push('/login');
+  }, [isAuthenticated, router]);
 
-  if (isLoading) {
+  if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="space-y-4 w-full max-w-md px-6">
@@ -47,10 +34,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return <>{children}</>;

@@ -8,8 +8,8 @@ interface FilterSectionProps {
 export function FilterSection({ children }: FilterSectionProps) {
   return (
     <Card className="border-border">
-      <CardContent className="p-4">
-        <div className="flex flex-wrap items-end gap-4">{children}</div>
+      <CardContent className="p-3 md:p-4">
+        <div className="flex flex-wrap items-end gap-3 md:gap-4">{children}</div>
       </CardContent>
     </Card>
   );
@@ -22,7 +22,7 @@ interface FilterGroupProps {
 
 export function FilterGroup({ label, children }: FilterGroupProps) {
   return (
-    <div className="flex-1 min-w-[200px]">
+    <div className="flex-1 min-w-[160px] sm:min-w-[200px]">
       <label className="text-sm text-muted-foreground mb-2 block">{label}</label>
       {children}
     </div>
