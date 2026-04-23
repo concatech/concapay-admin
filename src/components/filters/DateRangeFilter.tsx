@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { format, subDays, startOfMonth, startOfYear, startOfQuarter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface DateRangeFilterProps {
   onDateChange?: (start: Date | undefined, end: Date | undefined) => void;
@@ -16,6 +17,8 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Controla qual calendário está visível no mobile
+  const [mobileStep, setMobileStep] = useState<'start' | 'end'>('start');
 
   const notify = (start: Date | undefined, end: Date | undefined) => {
     onDateChange?.(start, end);
@@ -42,12 +45,19 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
   const handleStartSelect = (date: Date | undefined) => {
     setStartDate(date);
     if (date && endDate && date > endDate) setEndDate(undefined);
+    // Avança automaticamente para o calendário de fim no mobile
+    if (date) setMobileStep('end');
   };
 
   const handleEndSelect = (date: Date | undefined) => {
     setEndDate(date);
     notify(startDate, date);
     if (date) setOpen(false);
+  };
+
+  const handleOpen = (val: boolean) => {
+    if (val) setMobileStep('start');
+    setOpen(val);
   };
 
   const handleClear = () => {
@@ -66,7 +76,7 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
 
   return (
     <div className="flex gap-2 w-full">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" className="justify-start text-left font-normal flex-1 min-w-0">
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
@@ -74,17 +84,14 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[min(95vw,700px)] max-h-[85vh] p-0 flex flex-col"
+          className="w-[min(95vw,700px)] p-0 overflow-y-auto overscroll-contain max-h-[var(--radix-popper-available-height)]"
           align="start"
           sideOffset={8}
-          side="bottom"
           collisionPadding={8}
           onFocusOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
         >
-          {/* Área scrollável */}
-          <div className="flex flex-col sm:flex-row overflow-y-auto flex-1 min-h-0">
-            {/* Presets: horizontal wrapping no mobile, coluna no desktop */}
+          <div className="flex flex-col sm:flex-row">
+            {/* Presets: horizontal wrap no mobile, coluna no desktop */}
             <div className="shrink-0 border-b sm:border-b-0 sm:border-r p-3">
               <p className="hidden sm:block text-xs font-medium text-muted-foreground px-2 mb-2">
                 Períodos
@@ -104,32 +111,73 @@ export function DateRangeFilter({ onDateChange }: DateRangeFilterProps) {
               </div>
             </div>
 
-            {/* Calendários: empilhados no mobile, lado a lado no desktop */}
-            <div className="flex flex-col sm:flex-row">
-              <div className="shrink-0 p-3">
-                <p className="text-xs font-medium text-muted-foreground text-center mb-1">Início</p>
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={handleStartSelect}
-                  locale={ptBR}
-                />
+            {/* Calendários */}
+            <div className="flex flex-col">
+              {/* Tabs Início / Fim — só no mobile */}
+              <div className="flex border-b sm:hidden">
+                <button
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium transition-colors',
+                    mobileStep === 'start'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                  onClick={() => setMobileStep('start')}
+                >
+                  Início{startDate ? ` · ${format(startDate, 'dd/MM')}` : ''}
+                </button>
+                <button
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium transition-colors',
+                    mobileStep === 'end'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                  onClick={() => setMobileStep('end')}
+                >
+                  Fim{endDate ? ` · ${format(endDate, 'dd/MM')}` : ''}
+                </button>
               </div>
-              <div className="shrink-0 border-t p-3 sm:border-t-0 sm:border-l">
-                <p className="text-xs font-medium text-muted-foreground text-center mb-1">Fim</p>
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={handleEndSelect}
-                  disabled={(date) => (startDate ? date < startDate : false)}
-                  locale={ptBR}
-                />
+
+              {/* Conteúdo dos calendários */}
+              <div className="flex flex-col sm:flex-row">
+                {/* Calendário de início */}
+                <div className={cn('shrink-0 p-3', mobileStep !== 'start' && 'hidden sm:block')}>
+                  <p className="hidden sm:block text-xs font-medium text-muted-foreground text-center mb-1">
+                    Início
+                  </p>
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={handleStartSelect}
+                    locale={ptBR}
+                  />
+                </div>
+
+                {/* Calendário de fim */}
+                <div
+                  className={cn(
+                    'shrink-0 p-3 sm:border-l',
+                    mobileStep !== 'end' && 'hidden sm:block',
+                  )}
+                >
+                  <p className="hidden sm:block text-xs font-medium text-muted-foreground text-center mb-1">
+                    Fim
+                  </p>
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={handleEndSelect}
+                    disabled={(date) => (startDate ? date < startDate : false)}
+                    locale={ptBR}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Footer fixo no fundo */}
-          <div className="shrink-0 flex justify-end border-t bg-popover px-3 py-2">
+          {/* Footer */}
+          <div className="flex justify-end border-t bg-popover px-3 py-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
               Fechar
             </Button>
