@@ -124,7 +124,7 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <Skeleton className="h-10 w-32" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
@@ -172,7 +172,7 @@ export default function UserDetailPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" onClick={() => router.push('/users')}>
           <ArrowLeft className="w-4 h-4 mr-2" />

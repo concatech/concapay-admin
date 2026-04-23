@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardData } from '@/types';
 import { api } from '@/services/api';
@@ -17,20 +17,17 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
-  useEffect(() => {
-    loadData();
+  const filters = useMemo(() => {
+    const f: { start_date?: string; end_date?: string } = {};
+    if (startDate) f.start_date = format(startDate, 'yyyy-MM-dd');
+    if (endDate) f.end_date = format(endDate, 'yyyy-MM-dd');
+    return f;
   }, [startDate, endDate]);
 
-  const loadData = async () => {
+  useEffect(() => {
+    const loadData = async () => {
     setLoading(true);
     try {
-      const filters: any = {};
-      if (startDate) {
-        filters.start_date = format(startDate, 'yyyy-MM-dd');
-      }
-      if (endDate) {
-        filters.end_date = format(endDate, 'yyyy-MM-dd');
-      }
       const dashboardData = await api.getDashboard(filters);
       setData(dashboardData);
     } catch (error) {
@@ -50,6 +47,8 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+    loadData();
+  }, [filters]);
 
   const handleDateChange = (start: Date | undefined, end: Date | undefined) => {
     setStartDate(start);
@@ -58,7 +57,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
@@ -145,7 +144,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#20304c] mb-2">Visão Geral</h1>
         <p className="text-lg text-[#20304c]">Atualizado em {formatDateTime(data.generated_at)}</p>
