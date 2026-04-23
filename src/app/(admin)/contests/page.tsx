@@ -308,8 +308,31 @@ export default function ContestsPage() {
 
               <div>
                 <Label>ID do Pedido</Label>
-                <p className="text-sm text-gray-600">{selectedContest.pending_fund.order_id}</p>
+                <button
+                  type="button"
+                  onClick={() => handleCopyOrderId(selectedContest.pending_fund.order_id)}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline text-left"
+                >
+                  {selectedContest.pending_fund.order_id}
+                </button>
               </div>
+
+              {selectedContest.pending_fund.product && (
+                <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded">
+                  <div className="col-span-2">
+                    <Label>Produto</Label>
+                    <p className="text-sm">{selectedContest.pending_fund.product.product_name}</p>
+                  </div>
+                  <div>
+                    <Label>Oferta</Label>
+                    <p className="text-sm">{selectedContest.pending_fund.product.offer_name}</p>
+                  </div>
+                  <div>
+                    <Label>Valor da Oferta</Label>
+                    <p className="text-sm">{formatCurrency(selectedContest.pending_fund.product.cash_value)}</p>
+                  </div>
+                </div>
+              )}
 
               {dialogType !== 'view' && (
                 <div>

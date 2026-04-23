@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilterSection, FilterGroup } from '@/components/filters/FilterSection';
 import { Search, Eye } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { useRouter } from 'next/navigation';
@@ -101,6 +102,9 @@ export default function UsersPage() {
                         <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Nome</TableHead>
                         <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Email</TableHead>
                         <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Tipo</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Saldo Total</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Vendas Aprovadas</TableHead>
+                        <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Compras Realizadas</TableHead>
                         <TableHead className="text-base font-bold text-gray-900 px-6 py-3">Cadastrado em</TableHead>
                         <TableHead className="text-right text-base font-bold text-gray-900 px-6 py-3">Ações</TableHead>
                       </TableRow>
@@ -117,6 +121,9 @@ export default function UsersPage() {
                               <Badge variant="secondary">Usuário</Badge>
                             )}
                           </TableCell>
+                          <TableCell className="px-6 py-4 whitespace-nowrap">{formatCurrency(user.total_balance ?? 0)}</TableCell>
+                          <TableCell className="px-6 py-4 text-center">{user.approved_sales_count ?? 0}</TableCell>
+                          <TableCell className="px-6 py-4 text-center">{user.successful_purchases_count ?? 0}</TableCell>
                           <TableCell className="px-6 py-4">{formatDate(user.inserted_at)}</TableCell>
                           <TableCell className="text-right px-6 py-4">
                             <Button
