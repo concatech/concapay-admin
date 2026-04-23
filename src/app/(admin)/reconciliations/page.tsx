@@ -85,7 +85,7 @@ export default function ReconciliationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#20304c] mb-2">Reconciliações</h1>
         <p className="text-lg text-[#20304c]">Histórico de reconciliações de pedidos</p>
