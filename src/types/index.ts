@@ -38,6 +38,9 @@ export interface User {
   inserted_at: string;
   updated_at: string;
   is_admin: boolean;
+  total_balance: string;
+  approved_sales_count: number;
+  successful_purchases_count: number;
 }
 
 export interface UserBalance {
@@ -63,6 +66,13 @@ export interface PendingFund {
   };
   created_at: string;
   release_at: string;
+  product?: {
+    offer_id: string;
+    offer_name: string;
+    cash_value: string;
+    product_id: string;
+    product_name: string;
+  };
 }
 
 // Transaction Types
