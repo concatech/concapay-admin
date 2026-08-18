@@ -3,7 +3,7 @@ import { Check, X, Clock, AlertCircle } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: string;
-  type?: 'order' | 'contest' | 'fund' | 'webhook';
+  type?: 'order' | 'contest' | 'fund' | 'webhook' | 'withdrawal';
 }
 
 export function StatusBadge({ status, type = 'order' }: StatusBadgeProps) {
@@ -65,6 +65,20 @@ export function StatusBadge({ status, type = 'order' }: StatusBadgeProps) {
           return { label: 'Ação Necessária', variant: 'secondary' as const, icon: AlertCircle, className: 'bg-amber-500 hover:bg-amber-600 text-white' };
         case 'failed':
           return { label: 'Falhou', variant: 'destructive' as const, icon: X, className: '' };
+        default:
+          return { label: status, variant: 'outline' as const, icon: AlertCircle, className: '' };
+      }
+    }
+
+    // Withdrawal statuses
+    if (type === 'withdrawal') {
+      switch (statusLower) {
+        case 'pending':
+          return { label: 'Pendente', variant: 'secondary' as const, icon: Clock, className: 'bg-amber-500 hover:bg-amber-600 text-white' };
+        case 'approved':
+          return { label: 'Aprovado', variant: 'default' as const, icon: Check, className: 'bg-green-500 hover:bg-green-600 text-white' };
+        case 'rejected':
+          return { label: 'Rejeitado', variant: 'destructive' as const, icon: X, className: '' };
         default:
           return { label: status, variant: 'outline' as const, icon: AlertCircle, className: '' };
       }

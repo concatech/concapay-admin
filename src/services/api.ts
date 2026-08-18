@@ -7,6 +7,7 @@ import type {
   Contest,
   Order,
   WebhookEvent,
+  Withdrawal,
   PaginatedResponse,
   ReconciliationResponse,
 } from '@/types';
@@ -263,6 +264,30 @@ export const api = {
     if (!response.ok) {
       handleAuthError(response);
       throw new Error('Failed to fetch orders');
+    }
+    return response.json();
+  },
+
+  // Withdrawals
+  getWithdrawals: async (filters?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Withdrawal>> => {
+    const params = buildSearchParams(
+      filters ? {
+        ...filters,
+        page: filters.page?.toString(),
+        limit: filters.limit?.toString()
+      } : undefined
+    );
+    const response = await fetch(`${API_BASE_URL}/admin/withdrawals?${params}`, {
+      headers: getHeaders(),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      handleAuthError(response);
+      throw new Error('Failed to fetch withdrawals');
     }
     return response.json();
   },
