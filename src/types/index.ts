@@ -195,6 +195,27 @@ export interface ReconciliationResponse {
   pagination: ReconciliationPagination;
 }
 
+// Withdrawal Types
+export type WithdrawalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Withdrawal {
+  id: string;
+  status: WithdrawalStatus;
+  amount: string;
+  pix_key: string;
+  reason: string | null;
+  user_id: string;
+  admin_id: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  requested_at: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 // Webhook Types
 export type WebhookEventType = 'order' | 'payment' | 'unknown';
 export type WebhookStatus = 'processed' | 'action_required' | 'failed';

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Home, Users, ShoppingCart, AlertTriangle, Webhook, RefreshCw } from 'lucide-react';
+import { Home, Users, ShoppingCart, AlertTriangle, Banknote, Webhook, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ const menuItems = [
   { title: 'Usuários',       icon: Users,         url: '/users' },
   { title: 'Vendas',         icon: ShoppingCart,  url: '/orders' },
   { title: 'Contestações',   icon: AlertTriangle, url: '/contests' },
+  { title: 'Saques',         icon: Banknote,      url: '/withdrawals' },
   { title: 'Reconciliações', icon: RefreshCw,     url: '/reconciliations' },
   { title: 'Webhooks',       icon: Webhook,       url: '/webhooks' },
 ];
