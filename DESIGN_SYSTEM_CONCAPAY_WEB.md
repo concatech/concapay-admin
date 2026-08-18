@@ -1,8 +1,8 @@
-# Design System - Concapay Web
+# Design System - Concapay
 
 ## 📋 Sumário Executivo
 
-Este documento descreve o sistema de design completo do projeto `concapay-web`, incluindo cores, tipografia, espaçamentos, componentes e padrões visuais. Este design system será usado como referência para aplicar o mesmo visual no projeto `concapay-admin`.
+Este documento descreve o sistema de design do `concapay-admin` (herdado do projeto `concapay-web`): cores, tipografia, espaçamentos, componentes e padrões visuais. O design system já está aplicado no código — os tokens vivem em `tailwind.config.ts` e os componentes base em `src/components/ui/` (shadcn/ui customizado). Use este documento como referência de manutenção para manter novas telas consistentes.
 
 ---
 
@@ -81,7 +81,7 @@ secondary: {
 ### Fonte Principal
 
 **Família:** `Exo` (Google Fonts)
-- **URL:** `https://fonts.googleapis.com/css2?family=Exo:wght@400;500;600;700&display=swap`
+- **Carregamento:** via `next/font/google` em `src/app/layout.tsx` (variável CSS `--font-exo`, `display: swap`)
 - **Pesos disponíveis:** 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
 
 ### Tamanhos Customizados (Tailwind)
@@ -164,33 +164,35 @@ spacing: {
 
 ### Botões (Button)
 
+Implementado em `src/components/ui/button.tsx` (shadcn/ui + cva).
+
 #### Variantes
 
-| Variante | Background | Texto | Hover | Border Radius |
-|----------|------------|-------|-------|---------------|
-| **Primary** | `#20304C` | Branco | `#2a4165` | `rounded-xl` (sm) ou `rounded-2xl` (md/lg) |
-| **Secondary** | `#6B7280` | Branco | `#4B5563` | `rounded-2xl` |
-| **Danger** | `#DC2626` | Branco | `#B91C1C` | `rounded-2xl` |
-| **Ghost** | Transparente | `#20304C` | `bg-gray-100` | `rounded-md` ou `rounded-lg` |
+| Variante | Background | Texto | Hover |
+|----------|------------|-------|-------|
+| **default** | `bg-voidLight` (`#20304C`) | Branco | `bg-[#2a4165]` |
+| **destructive** | `bg-destructive` | Branco | `bg-destructive/90` |
+| **outline** | `bg-background` + borda | `text-foreground` | `bg-accent` |
+| **secondary** | `bg-secondary` | `text-secondary-foreground` | `bg-secondary/80` |
+| **ghost** | Transparente | herdado | `bg-accent` |
+| **link** | Transparente | `text-primary` | underline |
 
 #### Tamanhos
 
-| Tamanho | Padding | Font Size | Border Radius |
-|---------|---------|-----------|---------------|
-| **Small** | `px-3 py-1.5` | `text-sm` | `rounded-xl` |
-| **Medium** | `px-6 py-2` | `text-base` | `rounded-2xl` |
-| **Large** | `px-8 py-3` | `text-lg` | `rounded-2xl` |
+| Tamanho | Dimensões | Border Radius |
+|---------|-----------|---------------|
+| **sm** | `h-8 px-3 py-1.5` | `rounded-xl` |
+| **default** | `h-9 px-4 py-2` | `rounded-xl` |
+| **lg** | `h-10 px-8 py-3` | `rounded-2xl` |
+| **icon** | `size-9` | `rounded-md` |
 
 #### Exemplo de Uso
 
 ```tsx
-<Button 
-  variant="primary" 
-  size="md"
-  className="bg-[#20304c] text-white rounded-lg px-4 py-2"
->
-  Cadastrar produto
-</Button>
+import { Button } from "@/components/ui/button";
+
+<Button>Cadastrar produto</Button>
+<Button variant="destructive" size="lg">Excluir</Button>
 ```
 
 ### Inputs (Input)
@@ -215,19 +217,24 @@ spacing: {
 
 ### Cards
 
-#### Estilo Padrão
+Implementado em `src/components/ui/card.tsx` (componentes `Card`, `CardHeader`, `CardTitle`, `CardContent`).
+
+#### Estilo Padrão (classes base do `Card`)
 
 - **Background:** `bg-white`
 - **Border Radius:** `rounded-xl`
+- **Border:** `border`
 - **Shadow:** `shadow` (padrão Tailwind)
 - **Padding:** `p-5`
 
 #### Exemplo
 
 ```tsx
-<div className="bg-white rounded-xl shadow p-5">
-  {/* Conteúdo */}
-</div>
+import { Card, CardContent } from "@/components/ui/card";
+
+<Card>
+  <CardContent>{/* Conteúdo */}</CardContent>
+</Card>
 ```
 
 ### Tabelas
@@ -242,55 +249,51 @@ spacing: {
 
 - **Linha Par:** `bg-[#f5f9fe]`
 - **Linha Ímpar:** `bg-white`
-- **Hover:** `hover:bg-gray-50`
+- **Hover:** `hover:bg-muted/50` (padrão do `TableRow` em `src/components/ui/table.tsx`)
 - **Padding:** `px-6 py-4`
 
 #### Exemplo
 
+Usar os componentes shadcn de `src/components/ui/table.tsx` (padrão aplicado em `src/app/(admin)/users/page.tsx`):
+
 ```tsx
-<table className="min-w-full divide-y divide-gray-200">
-  <thead className="bg-blue-100">
-    <tr>
-      <th className="px-6 py-3 text-left text-base font-bold text-gray-900">
-        Coluna
-      </th>
-    </tr>
-  </thead>
-  <tbody className="bg-white divide-y divide-gray-200">
-    <tr className="bg-[#f5f9fe] hover:bg-gray-50">
-      <td className="px-6 py-4">Dados</td>
-    </tr>
-  </tbody>
-</table>
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+<Table>
+  <TableHeader>
+    <TableRow className="bg-blue-100">
+      <TableHead className="text-base font-bold text-gray-900">Coluna</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow className="bg-[#f5f9fe]">
+      <TableCell>Dados</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
 ```
 
 ### Badges
 
-#### Badge de Status Ativo
+Implementado em `src/components/ui/badge.tsx` como variantes do componente `Badge` (ícones via `lucide-react` quando necessário):
+
+| Variante | Background | Uso |
+|----------|------------|-----|
+| **active** | `bg-[#b8ffd2]` | Status ativo |
+| **inactive** | `bg-[#ffc7c7]` | Status inativo/desativado |
+| **category** | `bg-[#d8e7ff]` | Categoria |
+| **default** | `bg-voidLight` | Destaque genérico |
 
 ```tsx
-<div className="flex items-center gap-1 bg-[#b8ffd2] text-gray-900 px-2 py-1 rounded-full w-fit">
-  <span className="text-sm font-medium">Ativo</span>
-  <CheckCircleIcon fontSize="small" />
-</div>
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
+
+<Badge variant="active"><CheckCircle /> Ativo</Badge>
+<Badge variant="inactive">Desativado</Badge>
+<Badge variant="category">{category}</Badge>
 ```
 
-#### Badge de Status Inativo
-
-```tsx
-<div className="flex items-center gap-1 bg-[#ffc7c7] text-gray-900 px-2 py-1 rounded-full w-fit">
-  <span className="text-sm font-medium">Desativado</span>
-  <CancelIcon fontSize="small" />
-</div>
-```
-
-#### Badge de Categoria
-
-```tsx
-<div className="bg-[#d8e7ff] text-gray-900 px-2 py-1 rounded-lg w-fit">
-  {category}
-</div>
-```
+> Nota: `src/components/shared/StatusBadge.tsx` (status de pedidos/contestações) usa deliberadamente outra escala de cores (`bg-green-500`, `bg-amber-500`, `destructive`) com ícones.
 
 ### Sidebar
 
@@ -317,6 +320,8 @@ spacing: {
 
 ### Header
 
+Implementado em `src/components/layout/AppHeader.tsx` (toggle do menu + botão Sair).
+
 #### Estilo Geral
 
 - **Background:** `bg-white`
@@ -324,28 +329,19 @@ spacing: {
 - **Border:** `border-b border-gray-200`
 - **Padding:** `px-4 py-3`
 
-#### Botões de Modo
-
-- **Container:** `bg-[#e3e8f4] border-0 border-[#d9ecff] rounded-[8px] p-[4px]`
-- **Botão Ativo:** `bg-[#20304c] text-white`
-- **Botão Inativo:** `bg-[#e3e8f4] text-[#20304c]`
-- **Padding:** `px-[14px] py-[8px]`
-- **Font:** `font-['Exo:SemiBold'] font-semibold text-[14px]`
-
 ---
 
 ## 🎯 Border Radius
 
-### Valores Customizados
+Neste projeto `--radius: 0.5rem` (definido em `src/app/globals.css`), então as classes resolvem para:
 
 | Valor | Classe | Uso |
 |-------|--------|-----|
-| `8px` | `rounded-[8px]` | Botões de modo, elementos pequenos |
-| `8.75px` | `rounded-[8.75px]` | Itens do menu |
-| `12px` | `rounded-lg` | Botões, inputs, cards médios |
-| `16px` | `rounded-xl` | Cards, botões pequenos |
-| `24px` | `rounded-2xl` | Botões grandes, elementos destacados |
-| `32px` | `rounded-4xl` | Elementos muito grandes |
+| `8px` | `rounded-lg` (`var(--radius)`) | Inputs, elementos pequenos |
+| `8.75px` | `rounded-[8.75px]` | Itens do menu do sidebar |
+| `12px` | `rounded-xl` | Cards, botões (tamanhos sm/default) |
+| `16px` | `rounded-2xl` | Botões grandes, elementos destacados |
+| `32px` | `rounded-4xl` | Elementos muito grandes (custom em `tailwind.config.ts`) |
 
 ---
 
@@ -390,11 +386,13 @@ spacing: {
 </div>
 ```
 
-### Container Principal
+### Layout Principal (Admin)
 
-- **Max Width:** `max-w-7xl` (1280px)
-- **Padding:** `px-4 sm:px-6 lg:px-8`
-- **Background:** `bg-gray-100` (layout principal)
+Definido em `src/app/(admin)/layout.tsx`:
+
+- **Estrutura:** `flex h-screen` com `AppSidebar` fixo à esquerda e coluna `AppHeader` + `<main>` à direita
+- **Main:** `flex-1 overflow-auto bg-background`
+- **Responsivo:** sidebar vira overlay com backdrop abaixo de `md` (768px), controlado via `matchMedia`
 
 ---
 
@@ -421,7 +419,7 @@ spacing: {
 
 ## 📝 Notas de Implementação
 
-1. **Fonte Exo:** Deve ser carregada via Google Fonts no `index.html`
+1. **Fonte Exo:** Carregada via `next/font/google` em `src/app/layout.tsx` (variável `--font-exo`)
 2. **Cores Customizadas:** Muitas cores usam valores hex diretos (`text-[#20304c]`) em vez de classes do Tailwind
 3. **Espaçamentos Específicos:** Alguns espaçamentos usam valores customizados (`px-[21px]`, `py-[7px]`)
 4. **Consistência:** O design usa principalmente a paleta de cores definida, mas alguns elementos têm cores específicas inline
@@ -432,18 +430,23 @@ spacing: {
 
 ### Card de Estatística
 
+Padrão usado em `src/app/(admin)/dashboard/page.tsx`, com o componente `Card` do shadcn (as classes base `bg-white rounded-xl border shadow p-5` vivem em `src/components/ui/card.tsx`) e ícones de `lucide-react`:
+
 ```tsx
-<div className="bg-white rounded-xl shadow p-5">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="text-[#4a5565] text-base">Total de vendas</p>
-      <p className="text-xl text-[#101828] font-normal">R$ 12.590,98</p>
-    </div>
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp } from "lucide-react";
+
+<Card className="hover:shadow-lg transition-shadow">
+  <CardHeader className="flex items-center justify-between">
+    <CardTitle className="text-[#4a5565] text-base">Total de vendas</CardTitle>
     <div className="bg-[#dbeafe] p-2.5 rounded-lg">
-      <TrendingUpIcon htmlColor="black"/>
+      <TrendingUp className="text-black" />
     </div>
-  </div>
-</div>
+  </CardHeader>
+  <CardContent>
+    <p className="text-xl text-[#101828] font-normal">R$ 12.590,98</p>
+  </CardContent>
+</Card>
 ```
 
 ### Botão Primário
@@ -465,6 +468,6 @@ spacing: {
 
 ---
 
-**Última atualização:** 2024-01-XX  
-**Versão:** 1.0.0
+**Última atualização:** 2026-08-17  
+**Versão:** 1.1.0
 

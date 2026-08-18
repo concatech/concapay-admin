@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Concapay Admin
 
-## Getting Started
+Painel administrativo da Concapay: gestão de usuários, pedidos, contestações, webhooks e reconciliações, com dashboard de métricas de vendas.
 
-First, run the development server:
+## Stack
+
+- [Next.js 16](https://nextjs.org) (App Router, diretório `src/`) + React 19 + TypeScript
+- [Tailwind CSS 3](https://tailwindcss.com) com tokens customizados da marca (ver [Design System](DESIGN_SYSTEM_CONCAPAY_WEB.md))
+- [shadcn/ui](https://ui.shadcn.com) (componentes em `src/components/ui/`)
+- [TanStack React Query](https://tanstack.com/query) para dados da API (hooks em `src/hooks/`)
+- Fonte [Exo](https://fonts.google.com/specimen/Exo) via `next/font/google`
+- `lucide-react` (ícones), `sonner` (toasts), `date-fns` (datas)
+
+## Como rodar
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O app sobe em [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Configuração da API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+A URL base da API é lida de `NEXT_PUBLIC_API_BASE_URL` (ver `src/config/api.ts`). Sem a variável, o fallback é a API de produção (`https://concapay-back.fly.dev/api/v1`). Para apontar para outro backend, crie um `.env.local`:
 
-## Learn More
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run start` | Serve o build de produção |
+| `npm run lint` | ESLint |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estrutura
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── (admin)/          # Rotas autenticadas: dashboard, users, users/[id],
+│   │                     # orders, contests, webhooks, reconciliations
+│   ├── login/            # Tela de login
+│   └── page.tsx          # Redirect raiz (autenticado → /dashboard, senão → /login)
+├── components/
+│   ├── ui/               # Componentes base (shadcn/ui customizado)
+│   ├── layout/           # AppSidebar, AppHeader
+│   ├── filters/          # FilterSection, DateRangeFilter, MultiSelectFilter
+│   ├── shared/           # StatusBadge, TablePagination
+│   └── ProtectedRoute.tsx
+├── config/               # API_BASE_URL
+├── hooks/                # useAuth + hooks React Query por recurso
+├── lib/                  # utils (cn, formatadores), query-client, api-error-handler
+├── services/             # api.ts (endpoints admin), auth.service.ts
+└── types/                # Tipos da API (paginação, User, Order, etc.)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Autenticação
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O login (`/login`) usa o `auth.service.ts`, que guarda `auth_token` e `csrf_token` no `localStorage`. As rotas do grupo `(admin)` são protegidas no cliente pelo componente `ProtectedRoute`; respostas 401 da API redirecionam para o login.
+
+## Design System
+
+O visual segue o design system da Concapay (paleta void/voidLight/azure, tipografia Exo, padrões de cards, tabelas e badges), documentado em [DESIGN_SYSTEM_CONCAPAY_WEB.md](DESIGN_SYSTEM_CONCAPAY_WEB.md) e implementado em `tailwind.config.ts` + `src/components/ui/`.
